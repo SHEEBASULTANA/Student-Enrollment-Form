@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Enrollment Form</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 50px;
+        }
+        input, button {
+            margin: 10px 0;
+            padding: 8px;
+            width: 100%;
+        }
+        .container {
+            width: 300px;
+            margin: 0 auto;
+        }
+        button {
+            width: 48%;
+            display: inline-block;
+        }
+        .reset-btn {
+            background-color: #f44336;
+            color: white;
+        }
+        .save-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Student Enrollment Form</h2>
+        <form id="enrollmentForm">
+            <label for="rollNo">Roll No:</label>
+            <input type="text" id="rollNo" name="rollNo" required disabled>
+
+            <label for="fullName">Full Name:</label>
+            <input type="text" id="fullName" name="fullName" required disabled>
+
+            <label for="class">Class:</label>
+            <input type="text" id="class" name="class" required disabled>
+
+            <label for="birthDate">Birth Date:</label>
+            <input type="date" id="birthDate" name="birthDate" required disabled>
+
+            <label for="address">Address:</label>
+            <input type="text" id="address" name="address" required disabled>
+
+            <label for="enrollmentDate">Enrollment Date:</label>
+            <input type="date" id="enrollmentDate" name="enrollmentDate" required disabled>
+
+            <button type="button" id="saveBtn" class="save-btn" disabled>Save</button>
+            <button type="button" id="updateBtn" class="save-btn" disabled>Update</button>
+            <button type="button" id="resetBtn" class="reset-btn">Reset</button>
+        </form>
+    </div>
+
+    <script>
+        const apiUrl = 'https://jsonpowerdb.com/api/'; // Your JsonPowerDB API endpoint
+
+        $(document).ready(function() {
+            // On page load, enable the Roll No field and move the cursor there
+            $('#rollNo').prop('disabled', false).focus();
+
+            // Save button click handler
+            $('#saveBtn').click(function() {
+                const data = {
+                    "Roll-No": $('#rollNo').val(),
+                    "Full-Name": $('#fullName').val(),
+                    "Class": $('#class').val(),
+                    "Birth-Date": $('#birthDate').val(),
+                    "Address": $('#address').val(),
+                    "Enrollment-Date": $('#enrollmentDate').val()
+                };
+
+                if (Object.values(data).some(value => value === "")) {
+                    alert("Please fill in all fields.");
+                    return;
+                }
+
+                // Make the API call to save the data
+                $.ajax({
+                    url: apiUrl + 'PUT/SCHOOL-DB/STUDENT-TABLE',
+                    type: 'POST',
+                    data: JSON.stringify(data),
+                    contentType: 'application/json',
+                    success: function(response) {
+                        Swal.fire('Success!', 'Student data saved successfully!', 'success');
+                        resetForm();
+                    },
+                    error: function(error) {
+                        Swal.fire('Error!', 'There was an issue saving the data.', 'error');
+                    }
+                });
+            });
+
+            // Update button click handler
+            $('#updateBtn').click(function() {
+                const data = {
+                    "Full-Name": $('#fullName').val(),
+                    "Class": $('#class').val(),
+                    "Birth-Date": $('#birthDate').val(),
+                    "Address": $('#address').val(),
+                    "Enrollment-Date": $('#enrollmentDate').val()
+                };
+
+                if (Object.values(data).some(value => value === "")) {
+                    alert("Please fill in all fields.");
+                    return;
+                }
+
+                // Make the API call to update the data
+                $.ajax({
+                    url: apiUrl + 'PUT/SCHOOL-DB/STUDENT-TABLE/' + $('#rollNo').val(),
+                    type: 'POST',
+                    data: JSON.stringify(data),
+                    contentType: 'application/json',
+                    success: function(response) {
+                        Swal.fire('Success!', 'Student data updated successfully!', 'success');
+                        resetForm();
+                    },
+                    error: function(error) {
+                        Swal.fire('Error!', 'There was an issue updating the data.', 'error');
+                    }
+                });
+            });
+
+            // Reset button click handler
+            $('#resetBtn').click(function() {
+                resetForm();
+            });
+
+            // Function to reset the form
+            function resetForm() {
+                $('#enrollmentForm')[0].reset();
+                $('#saveBtn').prop('disabled', true);
+                $('#updateBtn').prop('disabled', true);
+                $('#rollNo').prop('disabled', false).focus();
+                $('#fullName').prop('disabled', true);
+                $('#class').prop('disabled', true);
+                $('#birthDate').prop('disabled', true);
+                $('#address').prop('disabled', true);
+                $('#enrollmentDate').prop('disabled', true);
+            }
+
+            // Check if the Roll No exists in the database
+            $('#rollNo').blur(function() {
+                const rollNo = $(this).val();
+                if (rollNo) {
+                    $.ajax({
+                        url: apiUrl + 'GET/SCHOOL-DB/STUDENT-TABLE/' + rollNo,
+                        type: 'GET',
+                        success: function(response) {
+                            if (response && response.length > 0) {
+                                // Populate form with existing data and enable update
+                                const student = response[0];
+                                $('#fullName').val(student['Full-Name']).prop('disabled', false);
+                                $('#class').val(student['Class']).prop('disabled', false);
+                                $('#birthDate').val(student['Birth-Date']).prop('disabled', false);
+                                $('#address').val(student['Address']).prop('disabled', false);
+                                $('#enrollmentDate').val(student['Enrollment-Date']).prop('disabled', false);
+                                $('#saveBtn').prop('disabled', true);
+                                $('#updateBtn').prop('disabled', false);
+                            } else {
+                                // Enable Save button if no data found
+                                $('#saveBtn').prop('disabled', false);
+                                $('#updateBtn').prop('disabled', true);
+                            }
+                        },
+                        error: function(error) {
+                            alert('Error checking data.');
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
